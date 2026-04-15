@@ -27,6 +27,13 @@ Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI입니다.
 
 ## 설치
 
+Homebrew:
+
+```bash
+brew tap ludens/tap
+brew install --cask bkt2gh
+```
+
 소스에서 바로 실행:
 
 ```bash

@@ -46,3 +46,18 @@ snapshot:
 changelog:
   use: git
   sort: asc
+
+homebrew_casks:
+  - name: bkt2gh
+    ids:
+      - bkt2gh
+    binaries:
+      - bkt2gh
+    repository:
+      owner: ludens
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/ludens/bkt-to-gh"
+    description: "CLI for migrating Bitbucket Cloud repositories to GitHub"
+    caveats: |
+      Run `bkt2gh configure` before your first migration.

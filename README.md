@@ -27,6 +27,13 @@ It creates new GitHub repositories for selected Bitbucket repositories and migra
 
 ## Installation
 
+Homebrew:
+
+```bash
+brew tap ludens/tap
+brew install --cask bkt2gh
+```
+
 Run from source:
 
 ```bash
