@@ -24,6 +24,7 @@ func TestRunRootHelpReturnsNil(t *testing.T) {
 func TestRunCommandHelpReturnsNil(t *testing.T) {
 	for _, args := range [][]string{
 		{"migrate", "--help"},
+		{"migrate-preview", "--help"},
 		{"configure", "--help"},
 	} {
 		t.Run(args[0], func(t *testing.T) {
@@ -37,6 +38,16 @@ func TestRunCommandHelpReturnsNil(t *testing.T) {
 func TestMigrateConfigureFlagIsRemoved(t *testing.T) {
 	if err := run([]string{"migrate", "--configure"}); err == nil {
 		t.Fatal("run([migrate --configure]) error = nil, want error")
+	}
+}
+
+func TestMigrateDryRunFlagIsRemoved(t *testing.T) {
+	err := run([]string{"migrate", "--dry-run"})
+	if err == nil {
+		t.Fatal("run([migrate --dry-run]) error = nil, want usage error")
+	}
+	if !errors.Is(err, errUsage) {
+		t.Fatalf("run([migrate --dry-run]) error = %v, want usage error", err)
 	}
 }
 
@@ -79,6 +90,20 @@ func TestRunMigrateUsesProvidedContext(t *testing.T) {
 	cancel()
 
 	err := runWithIO(ctx, strings.NewReader(""), new(strings.Builder), new(strings.Builder), []string{"migrate", "--workspace", "team"})
+
+	if err == nil {
+		t.Fatal("runWithIO() error = nil, want context cancellation or configuration error")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("runWithIO() error = %v, want context cancellation before migration work", err)
+	}
+}
+
+func TestRunMigratePreviewUsesProvidedContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	err := runWithIO(ctx, strings.NewReader(""), new(strings.Builder), new(strings.Builder), []string{"migrate-preview", "--workspace", "team"})
 
 	if err == nil {
 		t.Fatal("runWithIO() error = nil, want context cancellation or configuration error")

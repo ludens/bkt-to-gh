@@ -163,7 +163,7 @@ type planRow struct {
 }
 
 func PrintDryRunPlan(out io.Writer, rows []planRow) {
-	fmt.Fprintln(out, "DRY-RUN migration plan")
+	fmt.Fprintln(out, "Migration preview")
 	fmt.Fprintf(out, "%-24s %-18s %-18s %-14s %-14s %s\n", "repo", "source visibility", "target visibility", "github", "action", "reason")
 	fmt.Fprintf(out, "%-24s %-18s %-18s %-14s %-14s %s\n", "----", "-----------------", "-----------------", "------", "------", "------")
 	for _, row := range rows {

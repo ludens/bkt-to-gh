@@ -61,7 +61,7 @@ func TestRunnerDryRunPreflightsWithoutCreatingOrMigrating(t *testing.T) {
 	if results[0].Status != model.StatusSuccess || results[1].Status != model.StatusSkipped {
 		t.Fatalf("results = %+v", results)
 	}
-	for _, want := range []string{"DRY-RUN migration plan", "repo-one", "would migrate", "repo-two", "would skip"} {
+	for _, want := range []string{"Migration preview", "repo-one", "would migrate", "repo-two", "would skip"} {
 		if !strings.Contains(out.String(), want) {
 			t.Fatalf("output missing %q:\n%s", want, out.String())
 		}

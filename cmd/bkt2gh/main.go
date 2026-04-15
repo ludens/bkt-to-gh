@@ -66,6 +66,8 @@ func runWithIO(ctx context.Context, in io.Reader, out, errOut io.Writer, args []
 		return nil
 	case "configure":
 		return runConfigure(in, out, errOut, args[1:])
+	case "migrate-preview":
+		return runMigratePreview(ctx, in, out, errOut, args[1:])
 	case "migrate":
 		return runMigrate(ctx, in, out, errOut, args[1:])
 	default:
@@ -102,13 +104,33 @@ func runMigrate(ctx context.Context, in io.Reader, out, errOut io.Writer, args [
 	fs := flag.NewFlagSet("migrate", flag.ContinueOnError)
 	fs.SetOutput(errOut)
 	workspace := fs.String("workspace", "", "Bitbucket workspace")
-	dryRun := fs.Bool("dry-run", false, "preflight Bitbucket/GitHub and print plan without creating or pushing")
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
 		return usageError{err: err}
 	}
+	return runMigration(ctx, in, out, *workspace, false)
+}
+
+func runMigratePreview(ctx context.Context, in io.Reader, out, errOut io.Writer, args []string) error {
+	if len(args) > 0 && isHelp(args[0]) {
+		printMigratePreviewUsage(out)
+		return nil
+	}
+	fs := flag.NewFlagSet("migrate-preview", flag.ContinueOnError)
+	fs.SetOutput(errOut)
+	workspace := fs.String("workspace", "", "Bitbucket workspace")
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return usageError{err: err}
+	}
+	return runMigration(ctx, in, out, *workspace, true)
+}
+
+func runMigration(ctx context.Context, in io.Reader, out io.Writer, workspace string, dryRun bool) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -129,8 +151,8 @@ func runMigrate(ctx context.Context, in io.Reader, out, errOut io.Writer, args [
 	if err != nil {
 		return err
 	}
-	if *workspace != "" {
-		cfg.BitbucketWorkspace = *workspace
+	if workspace != "" {
+		cfg.BitbucketWorkspace = workspace
 	}
 	if err := cfg.Validate(); err != nil {
 		return err
@@ -147,7 +169,7 @@ func runMigrate(ctx context.Context, in io.Reader, out, errOut io.Writer, args [
 	}
 	runner := migrate.Runner{
 		Config:    cfg,
-		DryRun:    *dryRun,
+		DryRun:    dryRun,
 		Out:       out,
 		Bitbucket: bb,
 		GitHub:    gh,
@@ -184,11 +206,13 @@ func chooseVisibilityPolicy(in io.Reader, out io.Writer) (policy.VisibilityPolic
 func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  bkt2gh configure")
-	fmt.Fprintln(out, "  bkt2gh migrate [--workspace name] [--dry-run]")
+	fmt.Fprintln(out, "  bkt2gh migrate-preview [--workspace name]")
+	fmt.Fprintln(out, "  bkt2gh migrate [--workspace name]")
 	fmt.Fprintln(out)
 	fmt.Fprintln(out, "Commands:")
-	fmt.Fprintln(out, "  configure  create or update .env interactively")
-	fmt.Fprintln(out, "  migrate    migrate selected Bitbucket repositories to GitHub")
+	fmt.Fprintln(out, "  configure        create or update .env interactively")
+	fmt.Fprintln(out, "  migrate-preview  preview migration plan without creating or pushing")
+	fmt.Fprintln(out, "  migrate          migrate selected Bitbucket repositories to GitHub")
 	fmt.Fprintln(out)
 	fmt.Fprintln(out, "Flags:")
 	fmt.Fprintln(out, "  -h, --help show help")
@@ -203,11 +227,21 @@ func printConfigureUsage(out io.Writer) {
 
 func printMigrateUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
-	fmt.Fprintln(out, "  bkt2gh migrate [--workspace name] [--dry-run]")
+	fmt.Fprintln(out, "  bkt2gh migrate [--workspace name]")
 	fmt.Fprintln(out)
 	fmt.Fprintln(out, "Flags:")
 	fmt.Fprintln(out, "  --workspace name  Bitbucket workspace")
-	fmt.Fprintln(out, "  --dry-run         preflight Bitbucket/GitHub and print plan without creating or pushing")
+	fmt.Fprintln(out, "  -h, --help        show help")
+}
+
+func printMigratePreviewUsage(out io.Writer) {
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  bkt2gh migrate-preview [--workspace name]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Preflights Bitbucket/GitHub and prints the migration plan without creating or pushing.")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Flags:")
+	fmt.Fprintln(out, "  --workspace name  Bitbucket workspace")
 	fmt.Fprintln(out, "  -h, --help        show help")
 }
 

@@ -4,7 +4,7 @@ Go CLI for migrating Bitbucket Cloud repositories to GitHub.
 
 [한국어](README.ko.md)
 
-It creates new GitHub repositories for selected Bitbucket repositories and migrates Git history, including branches and tags, using `git clone --mirror` and `git push --mirror`. Before running a real migration, dry-run mode checks target repositories, GitHub repository creation availability, and repository visibility policy.
+It creates new GitHub repositories for selected Bitbucket repositories and migrates Git history, including branches and tags, using `git clone --mirror` and `git push --mirror`. Before running a real migration, preview mode checks target repositories, GitHub repository creation availability, and repository visibility policy.
 
 ## Features
 
@@ -14,7 +14,7 @@ It creates new GitHub repositories for selected Bitbucket repositories and migra
 - Migrate Git history with mirror clone/push
 - Attempt LFS object fetch/push when `git-lfs` is installed
 - Choose GitHub repository visibility policy
-- Run dry-run preflight checks
+- Run migration preview preflight checks
 - Load configuration from `.env` with environment variable overrides
 
 ## Requirements
@@ -48,10 +48,10 @@ go build -o bkt2gh ./cmd/bkt2gh
 ./bkt2gh configure
 ```
 
-2. Review the migration plan with dry-run:
+2. Review the migration plan:
 
 ```bash
-./bkt2gh migrate --dry-run
+./bkt2gh migrate-preview
 ```
 
 3. Run the migration:
@@ -63,7 +63,7 @@ go build -o bkt2gh ./cmd/bkt2gh
 Temporarily use another Bitbucket workspace:
 
 ```bash
-./bkt2gh migrate --workspace my-workspace --dry-run
+./bkt2gh migrate-preview --workspace my-workspace
 ```
 
 ## Configuration
@@ -109,11 +109,13 @@ When using a GitHub fine-grained token, it must be able to create repositories f
 ```text
 Usage:
   bkt2gh configure
-  bkt2gh migrate [--workspace name] [--dry-run]
+  bkt2gh migrate-preview [--workspace name]
+  bkt2gh migrate [--workspace name]
 
 Commands:
-  configure  create or update .env interactively
-  migrate    migrate selected Bitbucket repositories to GitHub
+  configure        create or update .env interactively
+  migrate-preview  preview migration plan without creating or pushing
+  migrate          migrate selected Bitbucket repositories to GitHub
 
 Flags:
   -h, --help show help
@@ -127,6 +129,18 @@ Create or update `.env` interactively.
 ./bkt2gh configure
 ```
 
+### `migrate-preview`
+
+List Bitbucket repositories and print a migration plan for the repositories selected by the user.
+
+```bash
+./bkt2gh migrate-preview
+```
+
+Options:
+
+- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from `.env`
+
 ### `migrate`
 
 List Bitbucket repositories and migrate the repositories selected by the user to GitHub.
@@ -138,7 +152,6 @@ List Bitbucket repositories and migrate the repositories selected by the user to
 Options:
 
 - `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from `.env`
-- `--dry-run`: print only the migration plan without creating GitHub repositories or running Git clone/push
 
 ## Repository Selection
 
@@ -161,12 +174,12 @@ After selecting repositories, choose the GitHub repository visibility policy.
 - `all-public`: create all GitHub repositories as public
 - `follow-source`: follow the public/private state of the Bitbucket repository
 
-## dry-run
+## Preview
 
-Dry-run calls the Bitbucket/GitHub APIs to verify the plan, but it does not create repositories or run Git commands.
+Preview calls the Bitbucket/GitHub APIs to verify the plan, but it does not create repositories or run Git commands.
 
 ```bash
-./bkt2gh migrate --dry-run
+./bkt2gh migrate-preview
 ```
 
 Checked items:
@@ -178,7 +191,7 @@ Checked items:
 
 ## Real Migration Behavior
 
-When run without dry-run, each selected repository is processed in this order:
+When `migrate` runs, each selected repository is processed in this order:
 
 1. Clone the Bitbucket repository into a temporary directory with `git clone --mirror`
 2. Attempt `git lfs fetch --all` when `git-lfs` is available
