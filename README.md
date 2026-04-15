@@ -1,74 +1,76 @@
 # bkt2gh
 
-Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI입니다.
+Go CLI for migrating Bitbucket Cloud repositories to GitHub.
 
-선택한 Bitbucket 저장소를 GitHub에 새 저장소로 만들고, `git clone --mirror`와 `git push --mirror`로 브랜치와 태그를 포함한 Git 이력을 이전합니다. 실행 전 dry-run으로 대상 저장소, GitHub 생성 가능 여부, 공개 범위 정책을 확인할 수 있습니다.
+[한국어](README.ko.md)
 
-## 주요 기능
+It creates new GitHub repositories for selected Bitbucket repositories and migrates Git history, including branches and tags, using `git clone --mirror` and `git push --mirror`. Before running a real migration, dry-run mode checks target repositories, GitHub repository creation availability, and repository visibility policy.
 
-- Bitbucket Cloud workspace의 저장소 목록 조회
-- 터미널에서 이전할 저장소 선택
-- GitHub 저장소 생성
-- mirror clone/push 기반 Git 이력 이전
-- `git-lfs`가 설치된 경우 LFS 객체 fetch/push 시도
-- GitHub 저장소 공개 범위 정책 선택
-- dry-run 사전 점검
-- `.env` 기반 설정 및 환경변수 override
+## Features
 
-## 요구 사항
+- List repositories in a Bitbucket Cloud workspace
+- Select repositories to migrate from the terminal
+- Create GitHub repositories
+- Migrate Git history with mirror clone/push
+- Attempt LFS object fetch/push when `git-lfs` is installed
+- Choose GitHub repository visibility policy
+- Run dry-run preflight checks
+- Load configuration from `.env` with environment variable overrides
 
-- Go 1.22 이상
+## Requirements
+
+- Go 1.22 or later
 - Git
-- Bitbucket Cloud 계정과 app password
+- Bitbucket Cloud account and app password
 - GitHub token
-- 선택: Git LFS 저장소를 옮기려면 `git-lfs`
+- Optional: `git-lfs` for migrating Git LFS repositories
 
-## 설치
+## Installation
 
-소스에서 바로 실행:
+Run from source:
 
 ```bash
 go run ./cmd/bkt2gh --help
 ```
 
-바이너리 빌드:
+Build a binary:
 
 ```bash
 go build -o bkt2gh ./cmd/bkt2gh
 ./bkt2gh --help
 ```
 
-## 빠른 시작
+## Quick Start
 
-1. 설정 파일 생성:
+1. Create the configuration file:
 
 ```bash
 ./bkt2gh configure
 ```
 
-2. dry-run으로 이전 계획 확인:
+2. Review the migration plan with dry-run:
 
 ```bash
 ./bkt2gh migrate --dry-run
 ```
 
-3. 실제 마이그레이션 실행:
+3. Run the migration:
 
 ```bash
 ./bkt2gh migrate
 ```
 
-다른 Bitbucket workspace를 임시로 지정:
+Temporarily use another Bitbucket workspace:
 
 ```bash
 ./bkt2gh migrate --workspace my-workspace --dry-run
 ```
 
-## 설정
+## Configuration
 
-`bkt2gh configure`는 현재 디렉터리에 `.env` 파일을 만듭니다. 이미 `.env`가 있으면 덮어쓸지 확인합니다.
+`bkt2gh configure` creates a `.env` file in the current directory. If `.env` already exists, it asks whether to overwrite it.
 
-필수 값:
+Required values:
 
 ```dotenv
 BITBUCKET_USERNAME=you@example.com
@@ -78,31 +80,31 @@ GITHUB_TOKEN=your-github-token
 GITHUB_OWNER=your-github-user-or-org
 ```
 
-설정 우선순위:
+Configuration priority:
 
-1. 환경변수
+1. Environment variables
 2. `.env`
 
-즉, `.env`에 값이 있어도 같은 이름의 환경변수가 있으면 환경변수가 사용됩니다.
+If a value exists in `.env` and an environment variable with the same name is also set, the environment variable is used.
 
-## 토큰 권한
+## Token Permissions
 
-Bitbucket app password 권한:
+Bitbucket app password permissions:
 
 - Account: Read
 - Workspace membership: Read
 - Projects: Read
 - Repositories: Read
 
-GitHub token 권한:
+GitHub token permissions:
 
 - Metadata: Read-only
 - Administration: Read and write
 - Contents: Read and write
 
-GitHub fine-grained token을 쓰는 경우 `GITHUB_OWNER`가 가리키는 사용자 또는 조직에 저장소를 만들 수 있어야 합니다.
+When using a GitHub fine-grained token, it must be able to create repositories for the user or organization referenced by `GITHUB_OWNER`.
 
-## 사용법
+## Usage
 
 ```text
 Usage:
@@ -119,7 +121,7 @@ Flags:
 
 ### `configure`
 
-대화형 입력으로 `.env`를 생성하거나 갱신합니다.
+Create or update `.env` interactively.
 
 ```bash
 ./bkt2gh configure
@@ -127,84 +129,84 @@ Flags:
 
 ### `migrate`
 
-Bitbucket 저장소를 조회하고, 사용자가 선택한 저장소를 GitHub로 이전합니다.
+List Bitbucket repositories and migrate the repositories selected by the user to GitHub.
 
 ```bash
 ./bkt2gh migrate
 ```
 
-옵션:
+Options:
 
-- `--workspace name`: `.env`의 `BITBUCKET_WORKSPACE` 대신 사용할 workspace
-- `--dry-run`: GitHub 저장소 생성과 Git clone/push 없이 이전 계획만 출력
+- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from `.env`
+- `--dry-run`: print only the migration plan without creating GitHub repositories or running Git clone/push
 
-## 저장소 선택
+## Repository Selection
 
-`migrate` 실행 시 저장소 선택 화면이 나옵니다.
+When `migrate` runs, it opens a repository selection screen.
 
-명령:
+Commands:
 
-- 숫자: 해당 저장소 선택/해제
-- `1,3`: 여러 저장소 선택/해제
-- `all`: 현재 보이는 저장소 전체 선택
-- `none`: 현재 보이는 저장소 전체 해제
-- `filter text`: 이름 또는 slug 기준 필터
-- `done`: 선택 완료
+- Number: select/deselect that repository
+- `1,3`: select/deselect multiple repositories
+- `all`: select all currently visible repositories
+- `none`: deselect all currently visible repositories
+- `filter text`: filter by name or slug
+- `done`: finish selection
 
-## 공개 범위 정책
+## Visibility Policy
 
-저장소 선택 후 GitHub 저장소 공개 범위 정책을 고릅니다.
+After selecting repositories, choose the GitHub repository visibility policy.
 
-- `all-private`: 모든 GitHub 저장소를 private으로 생성
-- `all-public`: 모든 GitHub 저장소를 public으로 생성
-- `follow-source`: Bitbucket 저장소의 공개/비공개 상태를 따름
+- `all-private`: create all GitHub repositories as private
+- `all-public`: create all GitHub repositories as public
+- `follow-source`: follow the public/private state of the Bitbucket repository
 
 ## dry-run
 
-dry-run은 Bitbucket/GitHub API를 호출해 계획을 확인하지만, 저장소를 만들거나 Git 명령을 실행하지 않습니다.
+Dry-run calls the Bitbucket/GitHub APIs to verify the plan, but it does not create repositories or run Git commands.
 
 ```bash
 ./bkt2gh migrate --dry-run
 ```
 
-확인하는 항목:
+Checked items:
 
-- Bitbucket 저장소 목록 조회 가능 여부
-- GitHub token과 owner 접근 가능 여부
-- 대상 GitHub 저장소 이름 사용 가능 여부
-- 공개 범위 정책 적용 결과
+- Whether the Bitbucket repository list can be loaded
+- Whether the GitHub token and owner are accessible
+- Whether target GitHub repository names are available
+- Result of applying the visibility policy
 
-## 실제 마이그레이션 동작
+## Real Migration Behavior
 
-dry-run 없이 실행하면 선택한 저장소마다 다음 순서로 처리합니다.
+When run without dry-run, each selected repository is processed in this order:
 
-1. Bitbucket 저장소를 임시 디렉터리에 `git clone --mirror`로 복제
-2. `git-lfs`가 있으면 `git lfs fetch --all` 시도
-3. GitHub 저장소 생성
-4. origin을 GitHub clone URL로 변경
-5. `git-lfs`가 있으면 `git lfs push --all origin` 시도
-6. `git push --mirror origin` 실행
-7. 임시 디렉터리 정리
+1. Clone the Bitbucket repository into a temporary directory with `git clone --mirror`
+2. Attempt `git lfs fetch --all` when `git-lfs` is available
+3. Create the GitHub repository
+4. Change `origin` to the GitHub clone URL
+5. Attempt `git lfs push --all origin` when `git-lfs` is available
+6. Run `git push --mirror origin`
+7. Clean up the temporary directory
 
-이미 같은 이름의 GitHub 저장소가 있으면 덮어쓰지 않고 건너뜁니다.
+If a GitHub repository with the same name already exists, it is skipped without overwriting.
 
-## 개발
+## Development
 
-테스트:
+Test:
 
 ```bash
 go test ./...
 ```
 
-빌드:
+Build:
 
 ```bash
 go build -o bkt2gh ./cmd/bkt2gh
 ```
 
-## 주의 사항
+## Notes
 
-- 대상 GitHub 저장소가 이미 있으면 overwrite하지 않습니다.
-- GitHub 저장소 이름은 Bitbucket 저장소 slug를 사용합니다.
-- `.env`는 민감정보를 포함하므로 커밋하지 않습니다.
-- `git-lfs`가 없으면 LFS 처리는 건너뛰고 일반 Git mirror push만 진행합니다.
+- Existing target GitHub repositories are not overwritten.
+- GitHub repository names use Bitbucket repository slugs.
+- Do not commit `.env` because it contains sensitive information.
+- If `git-lfs` is not installed, LFS handling is skipped and only the regular Git mirror push is performed.
