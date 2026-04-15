@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"bkt2gh/internal/policy"
+	"github.com/ludens/bkt-to-gh/internal/policy"
 )
 
 func TestVisibilityPolicyModelSelectsWithEnter(t *testing.T) {

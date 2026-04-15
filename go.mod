@@ -1,4 +1,4 @@
-module bkt2gh
+module github.com/ludens/bkt-to-gh
 
 go 1.22
 

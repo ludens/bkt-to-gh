@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/term"
 
-	"bkt2gh/internal/policy"
+	"github.com/ludens/bkt-to-gh/internal/policy"
 )
 
 func ChooseVisibilityPolicyAuto(in *os.File, out *os.File) (policy.VisibilityPolicy, error) {

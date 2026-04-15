@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"bkt2gh/internal/config"
-	"bkt2gh/internal/github"
-	"bkt2gh/internal/model"
-	"bkt2gh/internal/policy"
+	"github.com/ludens/bkt-to-gh/internal/config"
+	"github.com/ludens/bkt-to-gh/internal/github"
+	"github.com/ludens/bkt-to-gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/policy"
 )
 
 var errFakeClone = errors.New("clone failed")

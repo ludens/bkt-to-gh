@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"bkt2gh/internal/config"
+	"github.com/ludens/bkt-to-gh/internal/config"
 )
 
 func TestRunRootHelpReturnsNil(t *testing.T) {

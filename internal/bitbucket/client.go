@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"bkt2gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/model"
 )
 
 const defaultBaseURL = "https://api.bitbucket.org"

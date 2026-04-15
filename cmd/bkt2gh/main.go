@@ -9,14 +9,14 @@ import (
 	"os"
 	"os/signal"
 
-	"bkt2gh/internal/bitbucket"
-	"bkt2gh/internal/config"
-	"bkt2gh/internal/github"
-	"bkt2gh/internal/gitops"
-	"bkt2gh/internal/migrate"
-	"bkt2gh/internal/model"
-	"bkt2gh/internal/policy"
-	"bkt2gh/internal/prompt"
+	"github.com/ludens/bkt-to-gh/internal/bitbucket"
+	"github.com/ludens/bkt-to-gh/internal/config"
+	"github.com/ludens/bkt-to-gh/internal/github"
+	"github.com/ludens/bkt-to-gh/internal/gitops"
+	"github.com/ludens/bkt-to-gh/internal/migrate"
+	"github.com/ludens/bkt-to-gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/policy"
+	"github.com/ludens/bkt-to-gh/internal/prompt"
 )
 
 var errUsage = errors.New("usage error")

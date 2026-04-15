@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"bkt2gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/model"
 )
 
 func TestMirrorMigratorRunsMirrorCloneLFSAndPush(t *testing.T) {

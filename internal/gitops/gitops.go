@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"bkt2gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/model"
 )
 
 type Runner interface {

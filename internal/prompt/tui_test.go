@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"bkt2gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/model"
 )
 
 func TestRepositorySelectorModelSelectsWithSpaceAndEnter(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/term"
 
-	"bkt2gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/model"
 )
 
 func SelectRepositoriesAuto(in *os.File, out *os.File, repos []model.Repository) ([]model.Repository, error) {

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"bkt2gh/internal/model"
-	"bkt2gh/internal/policy"
+	"github.com/ludens/bkt-to-gh/internal/model"
+	"github.com/ludens/bkt-to-gh/internal/policy"
 )
 
 func SelectRepositories(in io.Reader, out io.Writer, repos []model.Repository) ([]model.Repository, error) {
