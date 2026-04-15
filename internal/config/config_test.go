@@ -1,63 +1,135 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
 
-func TestLoadReadsDotEnvAndEnvironment(t *testing.T) {
+type memoryKeyring struct {
+	values map[string]string
+}
+
+func newMemoryKeyring() *memoryKeyring {
+	return &memoryKeyring{values: map[string]string{}}
+}
+
+func (m *memoryKeyring) Get(service, user string) (string, error) {
+	value, ok := m.values[service+"/"+user]
+	if !ok {
+		return "", ErrKeyNotFound
+	}
+	return value, nil
+}
+
+func (m *memoryKeyring) Set(service, user, password string) error {
+	if m.values == nil {
+		m.values = map[string]string{}
+	}
+	m.values[service+"/"+user] = password
+	return nil
+}
+
+func TestDefaultPathUsesUserConfigDir(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("XDG_CONFIG_HOME is Unix-specific")
+	}
 	dir := t.TempDir()
-	envPath := filepath.Join(dir, ".env")
-	if err := os.WriteFile(envPath, []byte(strings.Join([]string{
-		"BITBUCKET_USERNAME=bb-user",
-		"BITBUCKET_APP_PASSWORD=bb-pass",
-		"BITBUCKET_WORKSPACE=bb-workspace",
-		"GITHUB_TOKEN=gh-token",
-		"GITHUB_OWNER=gh-owner",
-		"",
-	}, "\n")), 0o600); err != nil {
-		t.Fatal(err)
+	t.Setenv("XDG_CONFIG_HOME", dir)
+
+	path, err := DefaultPath()
+	if err != nil {
+		t.Fatalf("DefaultPath() error = %v", err)
 	}
 
-	cfg, err := Load(dir)
+	want := filepath.Join(dir, "bkt2gh", "config.yaml")
+	if path != want {
+		t.Fatalf("DefaultPath() = %q, want %q", path, want)
+	}
+}
+
+func TestWriteAndLoadEncryptedConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	keyring := newMemoryKeyring()
+	want := Config{
+		BitbucketUsername:    "person@example.com",
+		BitbucketAppPassword: "bb-pass",
+		BitbucketWorkspace:   "team",
+		GitHubToken:          "gh-token",
+		GitHubOwner:          "acme",
+	}
+
+	if err := Write(path, want, keyring); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"person@example.com", "bb-pass", "team", "gh-token", "acme"} {
+		if strings.Contains(string(raw), secret) {
+			t.Fatalf("encrypted config leaked %q in:\n%s", secret, string(raw))
+		}
+	}
+
+	got, err := Load(path, keyring)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-
-	if cfg.BitbucketUsername != "bb-user" {
-		t.Fatalf("BitbucketUsername = %q", cfg.BitbucketUsername)
-	}
-	if cfg.BitbucketAppPassword != "bb-pass" {
-		t.Fatalf("BitbucketAppPassword = %q", cfg.BitbucketAppPassword)
-	}
-	if cfg.BitbucketWorkspace != "bb-workspace" {
-		t.Fatalf("BitbucketWorkspace = %q", cfg.BitbucketWorkspace)
-	}
-	if cfg.GitHubToken != "gh-token" {
-		t.Fatalf("GitHubToken = %q", cfg.GitHubToken)
-	}
-	if cfg.GitHubOwner != "gh-owner" {
-		t.Fatalf("GitHubOwner = %q", cfg.GitHubOwner)
+	if got != want {
+		t.Fatalf("Load() = %#v, want %#v", got, want)
 	}
 }
 
 func TestLoadAllowsEnvironmentOverride(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	keyring := newMemoryKeyring()
+	if err := Write(path, Config{BitbucketWorkspace: "from-file"}, keyring); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
 	t.Setenv("BITBUCKET_WORKSPACE", "from-env")
 
-	dir := t.TempDir()
-	envPath := filepath.Join(dir, ".env")
-	if err := os.WriteFile(envPath, []byte("BITBUCKET_WORKSPACE=from-file\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg, err := Load(dir)
+	cfg, err := Load(path, keyring)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
+
 	if cfg.BitbucketWorkspace != "from-env" {
 		t.Fatalf("BitbucketWorkspace = %q, want from-env", cfg.BitbucketWorkspace)
+	}
+}
+
+func TestLoadMissingFileUsesEnvironmentOnly(t *testing.T) {
+	t.Setenv("BITBUCKET_USERNAME", "bb-user")
+	t.Setenv("BITBUCKET_APP_PASSWORD", "bb-pass")
+	t.Setenv("BITBUCKET_WORKSPACE", "team")
+	t.Setenv("GITHUB_TOKEN", "gh-token")
+	t.Setenv("GITHUB_OWNER", "acme")
+
+	cfg, err := Load(filepath.Join(t.TempDir(), "config.yaml"), newMemoryKeyring())
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() error = %v", err)
+	}
+}
+
+func TestLoadReportsMissingKeyringEntry(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	writerKeyring := newMemoryKeyring()
+	if err := Write(path, Config{BitbucketWorkspace: "team"}, writerKeyring); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+
+	_, err := Load(path, newMemoryKeyring())
+	if !errors.Is(err, ErrKeyNotFound) {
+		t.Fatalf("Load() error = %v, want ErrKeyNotFound", err)
 	}
 }
 
@@ -74,40 +146,8 @@ func TestValidateReportsMissingFields(t *testing.T) {
 	}
 }
 
-func TestWriteDotEnvCreatesExpectedFile(t *testing.T) {
-	dir := t.TempDir()
-	cfg := Config{
-		BitbucketUsername:    "bb-user",
-		BitbucketAppPassword: "bb-pass",
-		BitbucketWorkspace:   "bb-workspace",
-		GitHubToken:          "gh-token",
-		GitHubOwner:          "gh-owner",
-	}
-
-	if err := WriteDotEnv(filepath.Join(dir, ".env"), cfg); err != nil {
-		t.Fatalf("WriteDotEnv() error = %v", err)
-	}
-
-	got, err := os.ReadFile(filepath.Join(dir, ".env"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := string(got)
-	for _, want := range []string{
-		"BITBUCKET_USERNAME=bb-user",
-		"BITBUCKET_APP_PASSWORD=bb-pass",
-		"BITBUCKET_WORKSPACE=bb-workspace",
-		"GITHUB_TOKEN=gh-token",
-		"GITHUB_OWNER=gh-owner",
-	} {
-		if !strings.Contains(text, want) {
-			t.Fatalf(".env missing %q in:\n%s", want, text)
-		}
-	}
-}
-
-func TestConfigureInteractiveShowsTokenScopeGuidanceAndEmailLabel(t *testing.T) {
-	dir := t.TempDir()
+func TestConfigureInteractiveWritesEncryptedConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
 	input := strings.NewReader(strings.Join([]string{
 		"person@example.com",
 		"bb-app-password",
@@ -117,10 +157,19 @@ func TestConfigureInteractiveShowsTokenScopeGuidanceAndEmailLabel(t *testing.T) 
 		"",
 	}, "\n"))
 	output := new(strings.Builder)
+	keyring := newMemoryKeyring()
 
-	_, err := ConfigureInteractive(input, output, filepath.Join(dir, ".env"))
+	_, err := ConfigureInteractive(input, output, path, keyring)
 	if err != nil {
 		t.Fatalf("ConfigureInteractive() error = %v", err)
+	}
+
+	cfg, err := Load(path, keyring)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.BitbucketUsername != "person@example.com" {
+		t.Fatalf("BitbucketUsername = %q", cfg.BitbucketUsername)
 	}
 
 	text := output.String()
@@ -133,6 +182,7 @@ func TestConfigureInteractiveShowsTokenScopeGuidanceAndEmailLabel(t *testing.T) 
 		"GitHub token (hidden)",
 		"Administration: Read and write",
 		"Contents: Read and write",
+		"Wrote encrypted config",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("output missing %q in:\n%s", want, text)
@@ -141,61 +191,29 @@ func TestConfigureInteractiveShowsTokenScopeGuidanceAndEmailLabel(t *testing.T) 
 }
 
 func TestConfigureInteractiveIfAllowedDoesNotOverwriteWhenDeclined(t *testing.T) {
-	dir := t.TempDir()
-	envPath := filepath.Join(dir, ".env")
-	original := "BITBUCKET_USERNAME=old@example.com\n"
-	if err := os.WriteFile(envPath, []byte(original), 0o600); err != nil {
-		t.Fatal(err)
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	keyring := newMemoryKeyring()
+	original := Config{BitbucketUsername: "old@example.com", BitbucketWorkspace: "old-team"}
+	if err := Write(path, original, keyring); err != nil {
+		t.Fatalf("Write() error = %v", err)
 	}
 
 	output := new(strings.Builder)
-	_, configured, err := ConfigureInteractiveIfAllowed(strings.NewReader("n\n"), output, envPath)
+	_, configured, err := ConfigureInteractiveIfAllowed(strings.NewReader("n\n"), output, path, keyring)
 	if err != nil {
 		t.Fatalf("ConfigureInteractiveIfAllowed() error = %v", err)
 	}
 	if configured {
 		t.Fatal("configured = true, want false")
 	}
-	got, err := os.ReadFile(envPath)
+	got, err := Load(path, keyring)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Load() error = %v", err)
 	}
-	if string(got) != original {
-		t.Fatalf(".env overwritten = %q, want %q", string(got), original)
+	if got.BitbucketUsername != original.BitbucketUsername {
+		t.Fatalf("config overwritten = %#v, want %#v", got, original)
 	}
-	if !strings.Contains(output.String(), ".env already exists") {
+	if !strings.Contains(output.String(), "config.yaml already exists") {
 		t.Fatalf("output missing overwrite prompt:\n%s", output.String())
-	}
-}
-
-func TestConfigureInteractiveIfAllowedOverwritesWhenConfirmed(t *testing.T) {
-	dir := t.TempDir()
-	envPath := filepath.Join(dir, ".env")
-	if err := os.WriteFile(envPath, []byte("BITBUCKET_USERNAME=old@example.com\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	input := strings.NewReader(strings.Join([]string{
-		"y",
-		"person@example.com",
-		"bb-app-password",
-		"team",
-		"gh-token",
-		"acme",
-		"",
-	}, "\n"))
-
-	_, configured, err := ConfigureInteractiveIfAllowed(input, new(strings.Builder), envPath)
-	if err != nil {
-		t.Fatalf("ConfigureInteractiveIfAllowed() error = %v", err)
-	}
-	if !configured {
-		t.Fatal("configured = false, want true")
-	}
-	got, err := os.ReadFile(envPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(got), "BITBUCKET_USERNAME=person@example.com") {
-		t.Fatalf(".env not overwritten with new config:\n%s", string(got))
 	}
 }

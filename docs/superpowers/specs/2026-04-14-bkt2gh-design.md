@@ -13,7 +13,7 @@ Dry-run mode calls Bitbucket and GitHub read/check APIs, lets the user select re
 ## Components
 
 - `cmd/bkt2gh`: main program.
-- `internal/config`: `.env` parsing, interactive `.env` creation, validation.
+- `internal/config`: encrypted config loading, interactive config creation, validation.
 - `internal/model`: shared repository and result types.
 - `internal/policy`: visibility policy enum and decision function.
 - `internal/bitbucket`: Bitbucket Cloud repository listing with pagination.

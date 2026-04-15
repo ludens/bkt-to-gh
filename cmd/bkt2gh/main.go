@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"path/filepath"
 
 	"bkt2gh/internal/bitbucket"
 	"bkt2gh/internal/config"
@@ -21,6 +20,9 @@ import (
 )
 
 var errUsage = errors.New("usage error")
+
+var defaultConfigPath = config.DefaultPath
+var defaultKeyring = config.DefaultKeyring
 
 type usageError struct {
 	err error
@@ -88,11 +90,11 @@ func runConfigure(in io.Reader, out, errOut io.Writer, args []string) error {
 		}
 		return usageError{err: err}
 	}
-	wd, err := os.Getwd()
+	configPath, err := defaultConfigPath()
 	if err != nil {
 		return err
 	}
-	_, _, err = config.ConfigureInteractiveIfAllowed(in, out, filepath.Join(wd, ".env"))
+	_, _, err = config.ConfigureInteractiveIfAllowed(in, out, configPath, defaultKeyring())
 	return err
 }
 
@@ -135,19 +137,19 @@ func runMigration(ctx context.Context, in io.Reader, out io.Writer, workspace st
 		return err
 	}
 
-	wd, err := os.Getwd()
+	configPath, err := defaultConfigPath()
 	if err != nil {
 		return err
 	}
-	envPath := filepath.Join(wd, ".env")
-	if !config.HasDotEnv(wd) {
-		fmt.Fprintln(out, ".env not found. Starting setup. You can also run `bkt2gh configure` anytime.")
-		if _, err := config.ConfigureInteractive(in, out, envPath); err != nil {
+	keyring := defaultKeyring()
+	if !config.HasConfig(configPath) {
+		fmt.Fprintf(out, "%s not found. Starting setup. You can also run `bkt2gh configure` anytime.\n", configPath)
+		if _, err := config.ConfigureInteractive(in, out, configPath, keyring); err != nil {
 			return err
 		}
 	}
 
-	cfg, err := config.Load(wd)
+	cfg, err := config.Load(configPath, keyring)
 	if err != nil {
 		return err
 	}
@@ -210,7 +212,7 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "  bkt2gh migrate [--workspace name]")
 	fmt.Fprintln(out)
 	fmt.Fprintln(out, "Commands:")
-	fmt.Fprintln(out, "  configure        create or update .env interactively")
+	fmt.Fprintln(out, "  configure        create or update encrypted config.yaml interactively")
 	fmt.Fprintln(out, "  migrate-preview  preview migration plan without creating or pushing")
 	fmt.Fprintln(out, "  migrate          migrate selected Bitbucket repositories to GitHub")
 	fmt.Fprintln(out)
@@ -222,7 +224,7 @@ func printConfigureUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  bkt2gh configure")
 	fmt.Fprintln(out)
-	fmt.Fprintln(out, "Creates or updates .env interactively.")
+	fmt.Fprintln(out, "Creates or updates encrypted config.yaml interactively.")
 }
 
 func printMigrateUsage(out io.Writer) {

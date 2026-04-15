@@ -15,7 +15,7 @@ It creates new GitHub repositories for selected Bitbucket repositories and migra
 - Attempt LFS object fetch/push when `git-lfs` is installed
 - Choose GitHub repository visibility policy
 - Run migration preview preflight checks
-- Load configuration from `.env` with environment variable overrides
+- Store encrypted configuration in the OS user config directory with environment variable overrides
 
 ## Requirements
 
@@ -68,9 +68,30 @@ Temporarily use another Bitbucket workspace:
 
 ## Configuration
 
-`bkt2gh configure` creates a `.env` file in the current directory. If `.env` already exists, it asks whether to overwrite it.
+`bkt2gh configure` creates an encrypted `config.yaml` in the OS user config directory. The encryption key is stored in the OS credential store/keychain.
+
+Default config paths:
+
+- Linux: `$XDG_CONFIG_HOME/bkt2gh/config.yaml`, or `~/.config/bkt2gh/config.yaml`
+- macOS: `~/Library/Application Support/bkt2gh/config.yaml`
+- Windows: `%AppData%\bkt2gh\config.yaml`
 
 Required values:
+
+- Bitbucket username
+- Bitbucket app password
+- Bitbucket workspace
+- GitHub token
+- GitHub owner or organization
+
+Configuration priority:
+
+1. Environment variables
+2. Encrypted `config.yaml`
+
+If a value exists in encrypted `config.yaml` and an environment variable with the same name is also set, the environment variable is used.
+
+Supported environment variables:
 
 ```dotenv
 BITBUCKET_USERNAME=you@example.com
@@ -79,13 +100,6 @@ BITBUCKET_WORKSPACE=your-workspace
 GITHUB_TOKEN=your-github-token
 GITHUB_OWNER=your-github-user-or-org
 ```
-
-Configuration priority:
-
-1. Environment variables
-2. `.env`
-
-If a value exists in `.env` and an environment variable with the same name is also set, the environment variable is used.
 
 ## Token Permissions
 
@@ -113,7 +127,7 @@ Usage:
   bkt2gh migrate [--workspace name]
 
 Commands:
-  configure        create or update .env interactively
+  configure        create or update encrypted config.yaml interactively
   migrate-preview  preview migration plan without creating or pushing
   migrate          migrate selected Bitbucket repositories to GitHub
 
@@ -123,7 +137,7 @@ Flags:
 
 ### `configure`
 
-Create or update `.env` interactively.
+Create or update encrypted `config.yaml` interactively.
 
 ```bash
 ./bkt2gh configure
@@ -139,7 +153,7 @@ List Bitbucket repositories and print a migration plan for the repositories sele
 
 Options:
 
-- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from `.env`
+- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from encrypted config
 
 ### `migrate`
 
@@ -151,7 +165,7 @@ List Bitbucket repositories and migrate the repositories selected by the user to
 
 Options:
 
-- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from `.env`
+- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from encrypted config
 
 ## Repository Selection
 
@@ -221,5 +235,5 @@ go build -o bkt2gh ./cmd/bkt2gh
 
 - Existing target GitHub repositories are not overwritten.
 - GitHub repository names use Bitbucket repository slugs.
-- Do not commit `.env` because it contains sensitive information.
+- Encrypted `config.yaml` is stored outside the repository in the OS user config directory.
 - If `git-lfs` is not installed, LFS handling is skipped and only the regular Git mirror push is performed.

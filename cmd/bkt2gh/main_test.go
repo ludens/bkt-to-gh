@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"bkt2gh/internal/config"
 )
 
 func TestRunRootHelpReturnsNil(t *testing.T) {
@@ -85,6 +88,35 @@ func TestRunCLIMigrateFlagErrorUsesStderrOnly(t *testing.T) {
 	}
 }
 
+func TestRunConfigureWritesEncryptedConfigToDefaultPath(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	keyring := newMainTestKeyring()
+	withTestConfigStore(t, path, keyring)
+
+	input := strings.NewReader(strings.Join([]string{
+		"person@example.com",
+		"bb-app-password",
+		"team",
+		"gh-token",
+		"acme",
+		"",
+	}, "\n"))
+
+	err := runWithIO(context.Background(), input, new(strings.Builder), new(strings.Builder), []string{"configure"})
+	if err != nil {
+		t.Fatalf("runWithIO(configure) error = %v", err)
+	}
+
+	cfg, err := config.Load(path, keyring)
+	if err != nil {
+		t.Fatalf("config.Load() error = %v", err)
+	}
+	if cfg.BitbucketWorkspace != "team" {
+		t.Fatalf("BitbucketWorkspace = %q, want team", cfg.BitbucketWorkspace)
+	}
+}
+
 func TestRunMigrateUsesProvidedContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -111,4 +143,37 @@ func TestRunMigratePreviewUsesProvidedContext(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("runWithIO() error = %v, want context cancellation before migration work", err)
 	}
+}
+
+type mainTestKeyring struct {
+	values map[string]string
+}
+
+func newMainTestKeyring() *mainTestKeyring {
+	return &mainTestKeyring{values: map[string]string{}}
+}
+
+func (m *mainTestKeyring) Get(service, user string) (string, error) {
+	value, ok := m.values[service+"/"+user]
+	if !ok {
+		return "", config.ErrKeyNotFound
+	}
+	return value, nil
+}
+
+func (m *mainTestKeyring) Set(service, user, password string) error {
+	m.values[service+"/"+user] = password
+	return nil
+}
+
+func withTestConfigStore(t *testing.T, path string, keyring config.Keyring) {
+	t.Helper()
+	oldPath := defaultConfigPath
+	oldKeyring := defaultKeyring
+	defaultConfigPath = func() (string, error) { return path, nil }
+	defaultKeyring = func() config.Keyring { return keyring }
+	t.Cleanup(func() {
+		defaultConfigPath = oldPath
+		defaultKeyring = oldKeyring
+	})
 }
