@@ -238,6 +238,13 @@ Build:
 go build -o bkt2gh ./cmd/bkt2gh
 ```
 
+Licenses:
+
+- Project: [MIT](LICENSE)
+- Third-party notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+- Generate collected third-party license texts when needed:
+  `go run github.com/google/go-licenses@latest save ./... --save_path=third_party_licenses`
+
 ## Notes
 
 - Existing target GitHub repositories are not overwritten.

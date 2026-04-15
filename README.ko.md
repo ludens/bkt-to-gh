@@ -238,6 +238,13 @@ go test ./...
 go build -o bkt2gh ./cmd/bkt2gh
 ```
 
+라이선스:
+
+- 프로젝트: [MIT](LICENSE)
+- 서드파티 고지: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+- 필요하면 서드파티 라이선스 원문 생성:
+  `go run github.com/google/go-licenses@latest save ./... --save_path=third_party_licenses`
+
 ## 주의 사항
 
 - 대상 GitHub 저장소가 이미 있으면 overwrite하지 않습니다.

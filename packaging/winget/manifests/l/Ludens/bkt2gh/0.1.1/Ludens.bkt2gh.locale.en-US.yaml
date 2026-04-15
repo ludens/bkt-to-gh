@@ -6,7 +6,8 @@ Publisher: Ludens
 PublisherUrl: https://github.com/ludens
 PackageName: bkt2gh
 PackageUrl: https://github.com/ludens/bkt-to-gh
-License: Proprietary
+License: MIT
+LicenseUrl: https://github.com/ludens/bkt-to-gh/blob/main/LICENSE
 ShortDescription: CLI for migrating Bitbucket Cloud repositories to GitHub.
 Description: |
   bkt2gh is a command-line tool for selecting Bitbucket Cloud repositories,
