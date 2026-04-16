@@ -127,6 +127,65 @@ func TestRunnerDoesNotCreateGitHubRepoWhenBitbucketCloneFails(t *testing.T) {
 	}
 }
 
+func TestRunnerCleansUpEachRepositoryBeforePreparingNext(t *testing.T) {
+	bb := &fakeBitbucket{repos: []model.Repository{
+		{Name: "Repo One", Slug: "repo-one", Private: true, CloneURL: "bb-url-1"},
+		{Name: "Repo Two", Slug: "repo-two", Private: true, CloneURL: "bb-url-2"},
+	}}
+	gh := &fakeGitHub{cloneURL: "gh-url"}
+	git := &fakeGit{}
+	git.onPrepare = func() {
+		if len(git.preparedAll) == 1 && !git.preparedAll[0].cleanedUp {
+			t.Fatal("first repository was not cleaned up before preparing second repository")
+		}
+	}
+	runner := Runner{
+		Config:           config.Config{BitbucketWorkspace: "team"},
+		Bitbucket:        bb,
+		GitHub:           gh,
+		Git:              git,
+		Out:              new(strings.Builder),
+		SelectRepos:      func([]model.Repository) ([]model.Repository, error) { return bb.repos, nil },
+		ChooseVisibility: func() (policy.VisibilityPolicy, error) { return policy.FollowSource, nil },
+	}
+
+	results, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("len(results) = %d, want 2", len(results))
+	}
+	if len(git.preparedAll) != 2 || !git.preparedAll[0].cleanedUp || !git.preparedAll[1].cleanedUp {
+		t.Fatalf("cleanup state = %+v", git.preparedAll)
+	}
+}
+
+func TestRunnerCleansUpAfterPushFailure(t *testing.T) {
+	bb := &fakeBitbucket{repos: []model.Repository{{Name: "Repo One", Slug: "repo-one", CloneURL: "bb-url"}}}
+	gh := &fakeGitHub{cloneURL: "gh-url"}
+	git := &fakeGit{nextPushErr: errors.New("push failed")}
+	runner := Runner{
+		Config:           config.Config{BitbucketWorkspace: "team"},
+		Bitbucket:        bb,
+		GitHub:           gh,
+		Git:              git,
+		Out:              new(strings.Builder),
+		SelectRepos:      func([]model.Repository) ([]model.Repository, error) { return bb.repos, nil },
+		ChooseVisibility: func() (policy.VisibilityPolicy, error) { return policy.FollowSource, nil },
+	}
+	results, err := runner.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if len(results) != 1 || results[0].Status != model.StatusFailed {
+		t.Fatalf("results = %+v, want one failed result", results)
+	}
+	if len(git.preparedAll) != 1 || !git.preparedAll[0].cleanedUp {
+		t.Fatalf("cleanup after push failure = %+v", git.preparedAll)
+	}
+}
+
 type fakeBitbucket struct {
 	called bool
 	repos  []model.Repository
@@ -161,9 +220,12 @@ func (f *fakeGitHub) CheckCreateAccess(ctx context.Context) error {
 }
 
 type fakeGit struct {
-	called     bool
-	prepareErr error
-	prepared   *fakePreparedMirror
+	called      bool
+	prepareErr  error
+	prepared    *fakePreparedMirror
+	preparedAll []*fakePreparedMirror
+	onPrepare   func()
+	nextPushErr error
 }
 
 func (f *fakeGit) Prepare(ctx context.Context, repo model.Repository) (interface {
@@ -171,22 +233,29 @@ func (f *fakeGit) Prepare(ctx context.Context, repo model.Repository) (interface
 	Cleanup() error
 }, error) {
 	f.called = true
+	if f.onPrepare != nil {
+		f.onPrepare()
+	}
 	if f.prepareErr != nil {
 		return nil, f.prepareErr
 	}
-	f.prepared = &fakePreparedMirror{}
+	f.prepared = &fakePreparedMirror{pushErr: f.nextPushErr}
+	f.preparedAll = append(f.preparedAll, f.prepared)
 	return f.prepared, nil
 }
 
 type fakePreparedMirror struct {
-	dst string
+	dst       string
+	pushErr   error
+	cleanedUp bool
 }
 
 func (f *fakePreparedMirror) Push(ctx context.Context, githubCloneURL string) error {
 	f.dst = githubCloneURL
-	return nil
+	return f.pushErr
 }
 
 func (f *fakePreparedMirror) Cleanup() error {
+	f.cleanedUp = true
 	return nil
 }

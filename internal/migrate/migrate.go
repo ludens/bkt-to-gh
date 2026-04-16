@@ -82,40 +82,57 @@ func (r Runner) Run(ctx context.Context) ([]model.RepoResult, error) {
 
 	results := []model.RepoResult{}
 	for _, repo := range selected {
-		fmt.Fprintf(out, "Migrating %s...\n", repo.Slug)
-		private, err := policy.ResolveVisibility(visibilityPolicy, repo.Private)
-		if err != nil {
-			results = append(results, model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()})
-			continue
-		}
-		prepared, err := r.Git.Prepare(ctx, repo)
-		if err != nil {
-			results = append(results, model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()})
-			continue
-		}
-		defer prepared.Cleanup()
-		created, err := r.GitHub.CreateRepository(ctx, github.CreateRepositoryRequest{
-			Name:        repo.Slug,
-			Description: repo.Description,
-			Private:     private,
-		})
-		if err != nil {
-			results = append(results, model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()})
-			continue
-		}
-		if created.Skipped {
-			fmt.Fprintf(out, "Skip %s: %s\n", repo.Slug, created.Reason)
-			results = append(results, model.RepoResult{Repo: repo, Status: model.StatusSkipped, Reason: created.Reason})
-			continue
-		}
-		if err := prepared.Push(ctx, created.CloneURL); err != nil {
-			results = append(results, model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()})
-			continue
-		}
-		results = append(results, model.RepoResult{Repo: repo, Status: model.StatusSuccess})
+		results = append(results, r.migrateOne(ctx, repo, visibilityPolicy))
 	}
 	PrintSummary(out, results)
 	return results, nil
+}
+
+func (r Runner) migrateOne(ctx context.Context, repo model.Repository, visibilityPolicy policy.VisibilityPolicy) model.RepoResult {
+	out := r.out()
+	fmt.Fprintf(out, "Migrating %s...\n", repo.Slug)
+	private, err := policy.ResolveVisibility(visibilityPolicy, repo.Private)
+	if err != nil {
+		return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()}
+	}
+	prepared, err := r.Git.Prepare(ctx, repo)
+	if err != nil {
+		return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()}
+	}
+	cleanup := func() error {
+		if err := prepared.Cleanup(); err != nil {
+			return fmt.Errorf("cleanup failed for %s: %w", repo.Slug, err)
+		}
+		return nil
+	}
+	created, err := r.GitHub.CreateRepository(ctx, github.CreateRepositoryRequest{
+		Name:        repo.Slug,
+		Description: repo.Description,
+		Private:     private,
+	})
+	if err != nil {
+		if cleanupErr := cleanup(); cleanupErr != nil {
+			return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error() + "; " + cleanupErr.Error()}
+		}
+		return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()}
+	}
+	if created.Skipped {
+		fmt.Fprintf(out, "Skip %s: %s\n", repo.Slug, created.Reason)
+		if cleanupErr := cleanup(); cleanupErr != nil {
+			return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: cleanupErr.Error()}
+		}
+		return model.RepoResult{Repo: repo, Status: model.StatusSkipped, Reason: created.Reason}
+	}
+	if err := prepared.Push(ctx, created.CloneURL); err != nil {
+		if cleanupErr := cleanup(); cleanupErr != nil {
+			return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error() + "; " + cleanupErr.Error()}
+		}
+		return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: err.Error()}
+	}
+	if cleanupErr := cleanup(); cleanupErr != nil {
+		return model.RepoResult{Repo: repo, Status: model.StatusFailed, Reason: cleanupErr.Error()}
+	}
+	return model.RepoResult{Repo: repo, Status: model.StatusSuccess}
 }
 
 func (r Runner) runDryRun(ctx context.Context, selected []model.Repository, visibilityPolicy policy.VisibilityPolicy) ([]model.RepoResult, error) {
