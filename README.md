@@ -53,13 +53,13 @@ bkt2gh --help
 bkt2gh configure
 ```
 
-2. Review the migration plan:
+1. Review the migration plan:
 
 ```bash
 bkt2gh migrate-preview
 ```
 
-3. Run the migration:
+1. Run the migration:
 
 ```bash
 bkt2gh migrate
