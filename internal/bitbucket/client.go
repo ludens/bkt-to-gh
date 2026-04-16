@@ -47,14 +47,19 @@ func (c *Client) ListRepositories(ctx context.Context, workspace string) ([]mode
 		if err != nil {
 			return nil, fmt.Errorf("failed to call Bitbucket API: %w", err)
 		}
-		defer resp.Body.Close()
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			resp.Body.Close()
 			return nil, fmt.Errorf("Bitbucket API returned %s while listing repositories", resp.Status)
 		}
 
 		var page repositoriesPage
-		if err := json.NewDecoder(resp.Body).Decode(&page); err != nil {
-			return nil, fmt.Errorf("failed to decode Bitbucket repositories response: %w", err)
+		decodeErr := json.NewDecoder(resp.Body).Decode(&page)
+		closeErr := resp.Body.Close()
+		if decodeErr != nil {
+			return nil, fmt.Errorf("failed to decode Bitbucket repositories response: %w", decodeErr)
+		}
+		if closeErr != nil {
+			return nil, fmt.Errorf("failed to close Bitbucket repositories response: %w", closeErr)
 		}
 		for _, item := range page.Values {
 			repos = append(repos, item.toModel())

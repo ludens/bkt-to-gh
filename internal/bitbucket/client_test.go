@@ -2,14 +2,18 @@ package bitbucket
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
 func TestListRepositoriesPaginates(t *testing.T) {
 	var seenAuth bool
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
 		if ok && user == "user" && pass == "pass" {
 			seenAuth = true
@@ -30,7 +34,7 @@ func TestListRepositoriesPaginates(t *testing.T) {
 						"links": {"clone": [{"name": "https", "href": "https://bitbucket.org/team/repo-one.git"}]}
 					}
 				],
-				"next": "` + serverURLPlaceholder + `/2.0/repositories/team?page=2"
+				"next": "` + server.URL + `/2.0/repositories/team?page=2"
 			}`))
 		case "2":
 			w.Write([]byte(`{
@@ -52,7 +56,6 @@ func TestListRepositoriesPaginates(t *testing.T) {
 
 	client := NewClient("user", "pass")
 	client.BaseURL = server.URL
-	serverURLPlaceholder = server.URL
 
 	repos, err := client.ListRepositories(context.Background(), "team")
 	if err != nil {
@@ -72,4 +75,57 @@ func TestListRepositoriesPaginates(t *testing.T) {
 	}
 }
 
-var serverURLPlaceholder = "http://example.test"
+func TestListRepositoriesClosesResponseBodyBeforeNextPage(t *testing.T) {
+	transport := &closeCountingTransport{}
+	client := NewClient("user", "pass")
+	client.BaseURL = "https://bitbucket.example.test"
+	client.HTTPClient = &http.Client{Transport: transport}
+
+	_, err := client.ListRepositories(context.Background(), "team")
+	if err != nil {
+		t.Fatalf("ListRepositories() error = %v", err)
+	}
+	if len(transport.bodies) != 2 {
+		t.Fatalf("body count = %d, want 2", len(transport.bodies))
+	}
+	for i, body := range transport.bodies {
+		if !body.closed {
+			t.Fatalf("body %d was not closed", i)
+		}
+	}
+}
+
+type closeCountingTransport struct {
+	bodies []*closeCountingBody
+}
+
+func (t *closeCountingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if len(t.bodies) == 1 && !t.bodies[0].closed {
+		return nil, fmt.Errorf("first response body was not closed before next page request")
+	}
+	bodyText := `{"values":[]}`
+	if len(t.bodies) == 0 {
+		bodyText = `{"values":[],"next":"https://bitbucket.example.test/2.0/repositories/team?page=2"}`
+	}
+	body := &closeCountingBody{Reader: strings.NewReader(bodyText)}
+	t.bodies = append(t.bodies, body)
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Status:     "200 OK",
+		Header:     make(http.Header),
+		Body:       body,
+		Request:    req,
+	}, nil
+}
+
+type closeCountingBody struct {
+	*strings.Reader
+	closed bool
+}
+
+func (b *closeCountingBody) Close() error {
+	b.closed = true
+	return nil
+}
+
+var _ io.ReadCloser = (*closeCountingBody)(nil)
