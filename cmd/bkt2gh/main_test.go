@@ -88,6 +88,62 @@ func TestRunCLIMigrateFlagErrorUsesStderrOnly(t *testing.T) {
 	}
 }
 
+func TestRunCLIRejectsUnexpectedPositionalArgs(t *testing.T) {
+	tests := [][]string{
+		{"configure", "extra"},
+		{"migrate", "extra"},
+		{"migrate-preview", "extra"},
+	}
+	for _, args := range tests {
+		t.Run(strings.Join(args, "_"), func(t *testing.T) {
+			var stdout strings.Builder
+			var stderr strings.Builder
+
+			code := runCLI(context.Background(), strings.NewReader(""), &stdout, &stderr, args)
+
+			if code != 2 {
+				t.Fatalf("runCLI(%v) code = %d, want 2", args, code)
+			}
+			if stdout.String() != "" {
+				t.Fatalf("stdout = %q, want empty", stdout.String())
+			}
+			if !strings.Contains(stderr.String(), "unexpected argument") {
+				t.Fatalf("stderr missing unexpected argument: %q", stderr.String())
+			}
+		})
+	}
+}
+
+func TestRunCLICommandHelpUsesStdoutOnly(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "configure", args: []string{"configure", "--help"}, want: "bkt2gh configure"},
+		{name: "migrate", args: []string{"migrate", "--workspace", "team", "--help"}, want: "bkt2gh migrate [--workspace name]"},
+		{name: "migrate-preview", args: []string{"migrate-preview", "--workspace", "team", "--help"}, want: "bkt2gh migrate-preview [--workspace name]"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout strings.Builder
+			var stderr strings.Builder
+
+			code := runCLI(context.Background(), strings.NewReader(""), &stdout, &stderr, tt.args)
+
+			if code != 0 {
+				t.Fatalf("runCLI(%v) code = %d, want 0", tt.args, code)
+			}
+			if !strings.Contains(stdout.String(), tt.want) {
+				t.Fatalf("stdout missing %q:\n%s", tt.want, stdout.String())
+			}
+			if stderr.String() != "" {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+		})
+	}
+}
+
 func TestRunConfigureWritesEncryptedConfigToDefaultPath(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.yaml")

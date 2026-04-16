@@ -78,17 +78,14 @@ func runWithIO(ctx context.Context, in io.Reader, out, errOut io.Writer, args []
 }
 
 func runConfigure(in io.Reader, out, errOut io.Writer, args []string) error {
-	if len(args) > 0 && isHelp(args[0]) {
+	if hasHelpArg(args) {
 		printConfigureUsage(out)
 		return nil
 	}
 	fs := flag.NewFlagSet("configure", flag.ContinueOnError)
 	fs.SetOutput(errOut)
-	if err := fs.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return nil
-		}
-		return usageError{err: err}
+	if err := parseNoArgs(fs, args); err != nil {
+		return err
 	}
 	configPath, err := defaultConfigPath()
 	if err != nil {
@@ -99,35 +96,29 @@ func runConfigure(in io.Reader, out, errOut io.Writer, args []string) error {
 }
 
 func runMigrate(ctx context.Context, in io.Reader, out, errOut io.Writer, args []string) error {
-	if len(args) > 0 && isHelp(args[0]) {
+	if hasHelpArg(args) {
 		printMigrateUsage(out)
 		return nil
 	}
 	fs := flag.NewFlagSet("migrate", flag.ContinueOnError)
 	fs.SetOutput(errOut)
 	workspace := fs.String("workspace", "", "Bitbucket workspace")
-	if err := fs.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return nil
-		}
-		return usageError{err: err}
+	if err := parseNoArgs(fs, args); err != nil {
+		return err
 	}
 	return runMigration(ctx, in, out, *workspace, false)
 }
 
 func runMigratePreview(ctx context.Context, in io.Reader, out, errOut io.Writer, args []string) error {
-	if len(args) > 0 && isHelp(args[0]) {
+	if hasHelpArg(args) {
 		printMigratePreviewUsage(out)
 		return nil
 	}
 	fs := flag.NewFlagSet("migrate-preview", flag.ContinueOnError)
 	fs.SetOutput(errOut)
 	workspace := fs.String("workspace", "", "Bitbucket workspace")
-	if err := fs.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return nil
-		}
-		return usageError{err: err}
+	if err := parseNoArgs(fs, args); err != nil {
+		return err
 	}
 	return runMigration(ctx, in, out, *workspace, true)
 }
@@ -249,4 +240,26 @@ func printMigratePreviewUsage(out io.Writer) {
 
 func isHelp(arg string) bool {
 	return arg == "-h" || arg == "--help" || arg == "help"
+}
+
+func hasHelpArg(args []string) bool {
+	for _, arg := range args {
+		if isHelp(arg) {
+			return true
+		}
+	}
+	return false
+}
+
+func parseNoArgs(fs *flag.FlagSet, args []string) error {
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return usageError{err: err}
+	}
+	if fs.NArg() > 0 {
+		return usageError{err: fmt.Errorf("unexpected argument %q", fs.Arg(0))}
+	}
+	return nil
 }
