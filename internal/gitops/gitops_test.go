@@ -40,18 +40,6 @@ func TestMirrorMigratorRunsMirrorCloneLFSAndPush(t *testing.T) {
 	}
 }
 
-func TestDryRunMigratorDoesNotRunCommands(t *testing.T) {
-	runner := &recordingRunner{}
-	migrator := DryRunMigrator{Out: new(strings.Builder)}
-
-	if err := migrator.Migrate(context.Background(), model.Repository{Slug: "repo"}, "https://github.com/acme/repo.git"); err != nil {
-		t.Fatalf("Migrate() error = %v", err)
-	}
-	if len(runner.calls) != 0 {
-		t.Fatalf("runner calls = %v, want none", runner.calls)
-	}
-}
-
 func TestMirrorMigratorRemovesExistingMirrorBeforeClone(t *testing.T) {
 	tempDir := t.TempDir()
 	existingMirror := filepath.Join(tempDir, "repo-one.git")

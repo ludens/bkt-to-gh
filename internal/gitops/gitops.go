@@ -186,14 +186,3 @@ func (m *PreparedMirror) Cleanup() error {
 	}
 	return m.cleanup()
 }
-
-type DryRunMigrator struct {
-	Out io.Writer
-}
-
-func (m DryRunMigrator) Migrate(ctx context.Context, repo model.Repository, githubCloneURL string) error {
-	if m.Out != nil {
-		fmt.Fprintf(m.Out, "DRY-RUN git: clone --mirror %s; push --mirror %s\n", repo.CloneURL, githubCloneURL)
-	}
-	return nil
-}
