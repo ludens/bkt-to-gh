@@ -19,7 +19,6 @@ It creates new GitHub repositories for selected Bitbucket repositories and migra
 
 ## Requirements
 
-- Go 1.22 or later
 - Git
 - Bitbucket Cloud account and app password
 - GitHub token
@@ -34,17 +33,16 @@ brew tap ludens/tap
 brew install --cask bkt2gh
 ```
 
-Run from source:
+Windows Package Manager:
 
-```bash
-go run ./cmd/bkt2gh --help
+```powershell
+winget install Ludens.bkt2gh
 ```
 
-Build a binary:
+Verify installation:
 
 ```bash
-go build -o bkt2gh ./cmd/bkt2gh
-./bkt2gh --help
+bkt2gh --help
 ```
 
 ## Quick Start
@@ -52,25 +50,25 @@ go build -o bkt2gh ./cmd/bkt2gh
 1. Create the configuration file:
 
 ```bash
-./bkt2gh configure
+bkt2gh configure
 ```
 
 2. Review the migration plan:
 
 ```bash
-./bkt2gh migrate-preview
+bkt2gh migrate-preview
 ```
 
 3. Run the migration:
 
 ```bash
-./bkt2gh migrate
+bkt2gh migrate
 ```
 
 Temporarily use another Bitbucket workspace:
 
 ```bash
-./bkt2gh migrate-preview --workspace my-workspace
+bkt2gh migrate-preview --workspace my-workspace
 ```
 
 ## Configuration
@@ -147,7 +145,7 @@ Flags:
 Create or update encrypted `config.yaml` interactively.
 
 ```bash
-./bkt2gh configure
+bkt2gh configure
 ```
 
 ### `migrate-preview`
@@ -155,7 +153,7 @@ Create or update encrypted `config.yaml` interactively.
 List Bitbucket repositories and print a migration plan for the repositories selected by the user.
 
 ```bash
-./bkt2gh migrate-preview
+bkt2gh migrate-preview
 ```
 
 Options:
@@ -167,7 +165,7 @@ Options:
 List Bitbucket repositories and migrate the repositories selected by the user to GitHub.
 
 ```bash
-./bkt2gh migrate
+bkt2gh migrate
 ```
 
 Options:
@@ -200,7 +198,7 @@ After selecting repositories, choose the GitHub repository visibility policy.
 Preview calls the Bitbucket/GitHub APIs to verify the plan, but it does not create repositories or run Git commands.
 
 ```bash
-./bkt2gh migrate-preview
+bkt2gh migrate-preview
 ```
 
 Checked items:

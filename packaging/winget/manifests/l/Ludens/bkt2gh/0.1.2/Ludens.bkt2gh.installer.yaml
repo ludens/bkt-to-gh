@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
+PackageIdentifier: Ludens.bkt2gh
+PackageVersion: 0.1.2
+MinimumOSVersion: 10.0.0.0
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: bkt2gh.exe
+    PortableCommandAlias: bkt2gh
+ArchiveBinariesDependOnPath: true
+Commands:
+  - bkt2gh
+ReleaseDate: 2026-04-15
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/ludens/bkt-to-gh/releases/download/v0.1.2/bkt2gh_0.1.2_windows_amd64.zip
+    InstallerSha256: E179A5E10298435E32EC40450B22B49A4B6F1808B6B51AAE003233EDFDBBCB84
+  - Architecture: arm64
+    InstallerUrl: https://github.com/ludens/bkt-to-gh/releases/download/v0.1.2/bkt2gh_0.1.2_windows_arm64.zip
+    InstallerSha256: 4386E63B8011E3822BE31F8023EE5AC7525F5DC787B6FE3EC20908DE1D25EA39
+ManifestType: installer
+ManifestVersion: 1.10.0
