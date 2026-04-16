@@ -33,12 +33,6 @@ brew tap ludens/tap
 brew install --cask bkt2gh
 ```
 
-Windows Package Manager:
-
-```powershell
-winget install Ludens.bkt2gh
-```
-
 설치 확인:
 
 ```bash

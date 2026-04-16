@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add the first release packaging layer for `bkt2gh` using GoReleaser. This step prepares local and CI-friendly release artifacts, but does not publish Homebrew, winget, or GitHub Actions automation yet.
+Add the first release packaging layer for `bkt2gh` using GoReleaser. This step prepares local and CI-friendly release artifacts, but does not publish Homebrew or GitHub Actions automation yet.
 
 ## Scope
 
@@ -18,7 +18,6 @@ The release config will produce:
 This step excludes:
 
 - Homebrew tap formula generation.
-- winget manifests.
 - GitHub Actions workflow.
 - module path rename.
 - CLI behavior changes.
