@@ -47,13 +47,13 @@ bkt2gh --help
 bkt2gh configure
 ```
 
-1. 이전 계획 확인:
+2. 이전 계획 확인:
 
 ```bash
 bkt2gh migrate-preview
 ```
 
-1. 실제 마이그레이션 실행:
+3. 실제 마이그레이션 실행:
 
 ```bash
 bkt2gh migrate
