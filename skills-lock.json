@@ -1,10 +1,20 @@
 {
   "version": 1,
   "skills": {
+    "gh-cli": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "cbe644b0c6760ae2a1eaafa39133920d889331327065d92a131675a665273e56"
+    },
     "golang-cli": {
       "source": "samber/cc-skills-golang",
       "sourceType": "github",
       "computedHash": "d8b59c793d6ebcefa7a494e08a9b38f521bd3c8897cfd8dafa78ee474c117a82"
+    },
+    "split-commit": {
+      "source": "ludens/my-skills",
+      "sourceType": "github",
+      "computedHash": "deaed06038317fc13da1229d6866e57e40c716a6c271861b73c4d6f793933a44"
     }
   }
 }
