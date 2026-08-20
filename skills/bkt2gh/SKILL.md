@@ -1,6 +1,6 @@
 ---
 name: bkt2gh
-description: Use when running or scripting the bkt2gh CLI to migrate Bitbucket Cloud repositories to GitHub, or when troubleshooting bkt2gh configuration, migration preview, LFS handling, or mirror-push behavior.
+description: Use when running or scripting the bkt2gh CLI to migrate Bitbucket Cloud repositories to GitHub, or when troubleshooting bkt2gh configuration, migration preview, or mirror-push behavior.
 ---
 
 # bkt2gh
@@ -29,7 +29,7 @@ Required GitHub token permissions: Metadata Read-only; Administration Read+write
 - A config file must exist before `migrate` / `migrate-preview` run; env vars alone do not skip interactive setup. Create the config once on a machine with a working OS keychain (go-keyring fails on headless Linux).
 - `--workspace` applies to that single invocation only; it never persists.
 - Existing GitHub repos are skipped, never overwritten. Target repo names = Bitbucket slugs.
-- `git-lfs` is optional; LFS fetch/push is silently skipped when `git-lfs` is absent.
+- Git LFS is not supported: LFS objects are not migrated.
 
 ## Repository Selection (TUI)
 
@@ -41,4 +41,4 @@ Required GitHub token permissions: Metadata Read-only; Administration Read+write
 
 ## Migration Order
 
-mirror clone → LFS fetch (optional) → create GitHub repo → `git remote set-url origin` → LFS push (optional) → `git push --mirror origin` → cleanup temp dir.
+mirror clone → create GitHub repo → `git remote set-url origin` → `git push --mirror origin` → cleanup temp dir.

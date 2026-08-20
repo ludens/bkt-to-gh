@@ -16,7 +16,6 @@
 - Select repositories to migrate from the terminal
 - Create GitHub repositories
 - Migrate Git history with mirror clone/push
-- Attempt LFS object fetch/push when `git-lfs` is installed
 - Choose GitHub repository visibility policy
 - Run migration preview preflight checks
 - Store encrypted configuration in the OS user config directory with environment variable overrides
@@ -26,7 +25,6 @@
 - Git
 - Bitbucket Cloud account and app password
 - GitHub token
-- Optional: `git-lfs` for migrating Git LFS repositories
 
 ## Installation
 
@@ -202,12 +200,10 @@ Checked items:
 When `migrate` runs, each selected repository is processed in this order:
 
 1. Clone the Bitbucket repository into a temporary directory with `git clone --mirror`
-2. Attempt `git lfs fetch --all` when `git-lfs` is available
-3. Create the GitHub repository
-4. Change `origin` to the GitHub clone URL
-5. Attempt `git lfs push --all origin` when `git-lfs` is available
-6. Run `git push --mirror origin`
-7. Clean up the temporary directory
+2. Create the GitHub repository
+3. Change `origin` to the GitHub clone URL
+4. Run `git push --mirror origin`
+5. Clean up the temporary directory
 
 If a GitHub repository with the same name already exists, it is skipped without overwriting.
 

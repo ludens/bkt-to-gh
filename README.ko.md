@@ -16,7 +16,6 @@
 - 터미널에서 이전할 저장소 선택
 - GitHub 저장소 생성
 - mirror clone/push 기반 Git 이력 이전
-- `git-lfs`가 설치된 경우 LFS 객체 fetch/push 시도
 - GitHub 저장소 공개 범위 정책 선택
 - migration preview 사전 점검
 - OS 사용자 config 경로의 암호화된 설정과 환경변수 override
@@ -26,7 +25,6 @@
 - Git
 - Bitbucket Cloud 계정과 app password
 - GitHub token
-- 선택: Git LFS 저장소를 옮기려면 `git-lfs`
 
 ## 설치
 
@@ -202,12 +200,10 @@ bkt2gh migrate-preview
 `migrate`를 실행하면 선택한 저장소마다 다음 순서로 처리합니다.
 
 1. Bitbucket 저장소를 임시 디렉터리에 `git clone --mirror`로 복제
-2. `git-lfs`가 있으면 `git lfs fetch --all` 시도
-3. GitHub 저장소 생성
-4. origin을 GitHub clone URL로 변경
-5. `git-lfs`가 있으면 `git lfs push --all origin` 시도
-6. `git push --mirror origin` 실행
-7. 임시 디렉터리 정리
+2. GitHub 저장소 생성
+3. origin을 GitHub clone URL로 변경
+4. `git push --mirror origin` 실행
+5. 임시 디렉터리 정리
 
 이미 같은 이름의 GitHub 저장소가 있으면 덮어쓰지 않고 건너뜁니다.
 
