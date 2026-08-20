@@ -4,6 +4,8 @@ Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI입니다.
 
 [English](README.md)
 
+![bkt2gh](bkt-to-gh.jpg)
+
 선택한 Bitbucket 저장소를 GitHub에 새 저장소로 만들고, `git clone --mirror`와 `git push --mirror`로 브랜치와 태그를 포함한 Git 이력을 이전합니다. 실행 전 preview로 대상 저장소, GitHub 생성 가능 여부, 공개 범위 정책을 확인할 수 있습니다.
 
 ## 주요 기능
@@ -38,6 +40,16 @@ brew install --cask bkt2gh
 ```bash
 bkt2gh --help
 ```
+
+## 에이전트 스킬
+
+bkt2gh는 코딩 에이전트에 설정 및 마이그레이션 실행 방법을 알려주는 스킬(`skills/bkt2gh/SKILL.md`)을 포함합니다. 다음 명령으로 설치하세요:
+
+```bash
+npx skills add ludens/bkt-to-gh
+```
+
+이 명령은 감지된 에이전트(Claude Code, Codex, Cursor, Pi 등)에 `bkt2gh` 스킬을 추가합니다. `-g`(전역)나 `--skill bkt2gh` 같은 옵션은 [skills](https://github.com/vercel-labs/skills)를 참고하세요.
 
 ## 빠른 시작
 
@@ -234,8 +246,6 @@ go build -o bkt2gh ./cmd/bkt2gh
 
 - 프로젝트: [MIT](LICENSE)
 - 서드파티 고지: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-- 필요하면 서드파티 라이선스 원문 생성:
-  `go run github.com/google/go-licenses@latest save ./... --save_path=third_party_licenses`
 
 ## 주의 사항
 

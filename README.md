@@ -4,6 +4,8 @@ Go CLI for migrating Bitbucket Cloud repositories to GitHub.
 
 [한국어](README.ko.md)
 
+![bkt2gh](bkt-to-gh.jpg)
+
 It creates new GitHub repositories for selected Bitbucket repositories and migrates Git history, including branches and tags, using `git clone --mirror` and `git push --mirror`. Before running a real migration, preview mode checks target repositories, GitHub repository creation availability, and repository visibility policy.
 
 ## Features
@@ -38,6 +40,16 @@ Verify installation:
 ```bash
 bkt2gh --help
 ```
+
+## Agent Skills
+
+bkt2gh ships an agent skill (`skills/bkt2gh/SKILL.md`) that teaches coding agents how to configure and run migrations. Install it with:
+
+```bash
+npx skills add ludens/bkt-to-gh
+```
+
+This adds the `bkt2gh` skill to your detected agents (Claude Code, Codex, Cursor, Pi, and more). See [skills](https://github.com/vercel-labs/skills) for options like `-g` (global) or `--skill bkt2gh`.
 
 ## Quick Start
 
@@ -234,8 +246,6 @@ Licenses:
 
 - Project: [MIT](LICENSE)
 - Third-party notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-- Generate collected third-party license texts when needed:
-  `go run github.com/google/go-licenses@latest save ./... --save_path=third_party_licenses`
 
 ## Notes
 
