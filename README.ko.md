@@ -1,12 +1,18 @@
 # bkt2gh
 
-Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI입니다.
-
-[English](README.md)
-
 ![bkt2gh](bkt-to-gh.jpg)
 
-선택한 Bitbucket 저장소를 GitHub에 새 저장소로 만들고, `git clone --mirror`와 `git push --mirror`로 브랜치와 태그를 포함한 Git 이력을 이전합니다. 실행 전 preview로 대상 저장소, GitHub 생성 가능 여부, 공개 범위 정책을 확인할 수 있습니다.
+<p align="center"><strong>Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI입니다.</strong></p>
+
+## INDEX
+
+<p align="center">
+| <a href="README.md"><b>English</b></a> |
+| <a href="#주요-기능"><b>주요 기능</b></a> | <a href="#요구-사항"><b>요구 사항</b></a> | <a href="#설치"><b>설치</b></a> |
+| <a href="#빠른-시작"><b>빠른 시작</b></a> | <a href="#설정"><b>설정</b></a> | <a href="#사용법"><b>사용법</b></a> |
+| <a href="#preview"><b>Preview</b></a> | <a href="#실제-마이그레이션-동작"><b>실제 마이그레이션 동작</b></a> |
+| <a href="#개발"><b>개발</b></a> | <a href="#라이선스"><b>라이선스</b></a> |
+</p>
 
 ## 주요 기능
 
@@ -41,16 +47,6 @@ brew install --cask bkt2gh
 bkt2gh --help
 ```
 
-## 에이전트 스킬
-
-bkt2gh는 코딩 에이전트에 설정 및 마이그레이션 실행 방법을 알려주는 스킬(`skills/bkt2gh/SKILL.md`)을 포함합니다. 다음 명령으로 설치하세요:
-
-```bash
-npx skills add ludens/bkt-to-gh
-```
-
-이 명령은 감지된 에이전트(Claude Code, Codex, Cursor, Pi 등)에 `bkt2gh` 스킬을 추가합니다. `-g`(전역)나 `--skill bkt2gh` 같은 옵션은 [skills](https://github.com/vercel-labs/skills)를 참고하세요.
-
 ## 빠른 시작
 
 1. 설정 파일 생성:
@@ -76,6 +72,16 @@ bkt2gh migrate
 ```bash
 bkt2gh migrate-preview --workspace my-workspace
 ```
+
+### 에이전트 스킬
+
+bkt2gh는 코딩 에이전트에 설정 및 마이그레이션 실행 방법을 알려주는 스킬(`skills/bkt2gh/SKILL.md`)을 포함합니다. 다음 명령으로 설치하세요:
+
+```bash
+npx skills add ludens/bkt-to-gh
+```
+
+이 명령은 감지된 에이전트(Claude Code, Codex, Cursor, Pi 등)에 `bkt2gh` 스킬을 추가합니다. `-g`(전역)나 `--skill bkt2gh` 같은 옵션은 [skills](https://github.com/vercel-labs/skills)를 참고하세요.
 
 ## 설정
 
@@ -112,7 +118,7 @@ GITHUB_TOKEN=your-github-token
 GITHUB_OWNER=your-github-user-or-org
 ```
 
-## 토큰 권한
+### 토큰 권한
 
 Bitbucket app password 권한:
 
@@ -143,44 +149,25 @@ Commands:
   migrate          migrate selected Bitbucket repositories to GitHub
 
 Flags:
-  -h, --help show help
+  --workspace name  Bitbucket workspace (이번 실행에서 config 값 override)
+  -h, --help        show help
 ```
 
 ### `configure`
 
-대화형 입력으로 암호화된 `config.yaml`을 생성하거나 갱신합니다.
-
-```bash
-bkt2gh configure
-```
+암호화된 `config.yaml`을 대화형으로 생성하거나 갱신합니다. [설정](#설정) 참고.
 
 ### `migrate-preview`
 
-Bitbucket 저장소를 조회하고, 사용자가 선택한 저장소의 이전 계획을 출력합니다.
-
-```bash
-bkt2gh migrate-preview
-```
-
-옵션:
-
-- `--workspace name`: 암호화된 config의 `BITBUCKET_WORKSPACE` 대신 사용할 workspace
+Bitbucket 저장소를 조회하고, 저장소를 만들거나 push하지 않고 이전 계획을 출력합니다. [Preview](#preview) 참고.
 
 ### `migrate`
 
-Bitbucket 저장소를 조회하고, 사용자가 선택한 저장소를 GitHub로 이전합니다.
+Bitbucket 저장소를 조회하고 선택한 저장소를 GitHub로 이전합니다. [실제 마이그레이션 동작](#실제-마이그레이션-동작) 참고.
 
-```bash
-bkt2gh migrate
-```
+### 저장소 선택
 
-옵션:
-
-- `--workspace name`: 암호화된 config의 `BITBUCKET_WORKSPACE` 대신 사용할 workspace
-
-## 저장소 선택
-
-`migrate` 실행 시 저장소 선택 화면이 나옵니다.
+`migrate` 또는 `migrate-preview` 실행 시 저장소 선택 화면이 나옵니다.
 
 명령:
 
@@ -191,7 +178,7 @@ bkt2gh migrate
 - `filter text`: 이름 또는 slug 기준 필터
 - `done`: 선택 완료
 
-## 공개 범위 정책
+### 공개 범위 정책
 
 저장소 선택 후 GitHub 저장소 공개 범위 정책을 고릅니다.
 
@@ -242,14 +229,7 @@ go test ./...
 go build -o bkt2gh ./cmd/bkt2gh
 ```
 
-라이선스:
+## 라이선스
 
 - 프로젝트: [MIT](LICENSE)
 - 서드파티 고지: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-
-## 주의 사항
-
-- 대상 GitHub 저장소가 이미 있으면 overwrite하지 않습니다.
-- GitHub 저장소 이름은 Bitbucket 저장소 slug를 사용합니다.
-- 암호화된 `config.yaml`은 저장소 밖 OS 사용자 config 경로에 저장됩니다.
-- `git-lfs`가 없으면 LFS 처리는 건너뛰고 일반 Git mirror push만 진행합니다.

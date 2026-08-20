@@ -1,12 +1,18 @@
 # bkt2gh
 
-Go CLI for migrating Bitbucket Cloud repositories to GitHub.
-
-[한국어](README.ko.md)
-
 ![bkt2gh](bkt-to-gh.jpg)
 
-It creates new GitHub repositories for selected Bitbucket repositories and migrates Git history, including branches and tags, using `git clone --mirror` and `git push --mirror`. Before running a real migration, preview mode checks target repositories, GitHub repository creation availability, and repository visibility policy.
+<p align="center"><strong>Go CLI for migrating Bitbucket Cloud repositories to GitHub.</strong></p>
+
+## INDEX
+
+<p align="center">
+| <a href="README.ko.md"><b>한국어</b></a> |
+| <a href="#features"><b>Features</b></a> | <a href="#requirements"><b>Requirements</b></a> | <a href="#installation"><b>Installation</b></a> |
+| <a href="#quick-start"><b>Quick Start</b></a> | <a href="#configuration"><b>Configuration</b></a> | <a href="#usage"><b>Usage</b></a> |
+| <a href="#preview"><b>Preview</b></a> | <a href="#real-migration-behavior"><b>Real Migration Behavior</b></a> |
+| <a href="#development"><b>Development</b></a> | <a href="#license"><b>License</b></a> |
+</p>
 
 ## Features
 
@@ -41,16 +47,6 @@ Verify installation:
 bkt2gh --help
 ```
 
-## Agent Skills
-
-bkt2gh ships an agent skill (`skills/bkt2gh/SKILL.md`) that teaches coding agents how to configure and run migrations. Install it with:
-
-```bash
-npx skills add ludens/bkt-to-gh
-```
-
-This adds the `bkt2gh` skill to your detected agents (Claude Code, Codex, Cursor, Pi, and more). See [skills](https://github.com/vercel-labs/skills) for options like `-g` (global) or `--skill bkt2gh`.
-
 ## Quick Start
 
 1. Create the configuration file:
@@ -76,6 +72,16 @@ Temporarily use another Bitbucket workspace:
 ```bash
 bkt2gh migrate-preview --workspace my-workspace
 ```
+
+### Agent Skills
+
+bkt2gh ships an agent skill (`skills/bkt2gh/SKILL.md`) that teaches coding agents how to configure and run migrations. Install it with:
+
+```bash
+npx skills add ludens/bkt-to-gh
+```
+
+This adds the `bkt2gh` skill to your detected agents (Claude Code, Codex, Cursor, Pi, and more). See [skills](https://github.com/vercel-labs/skills) for options like `-g` (global) or `--skill bkt2gh`.
 
 ## Configuration
 
@@ -112,7 +118,7 @@ GITHUB_TOKEN=your-github-token
 GITHUB_OWNER=your-github-user-or-org
 ```
 
-## Token Permissions
+### Token Permissions
 
 Bitbucket app password permissions:
 
@@ -143,44 +149,25 @@ Commands:
   migrate          migrate selected Bitbucket repositories to GitHub
 
 Flags:
-  -h, --help show help
+  --workspace name  Bitbucket workspace (overrides config for this run)
+  -h, --help        show help
 ```
 
 ### `configure`
 
-Create or update encrypted `config.yaml` interactively.
-
-```bash
-bkt2gh configure
-```
+Create or update encrypted `config.yaml` interactively. See [Configuration](#configuration).
 
 ### `migrate-preview`
 
-List Bitbucket repositories and print a migration plan for the repositories selected by the user.
-
-```bash
-bkt2gh migrate-preview
-```
-
-Options:
-
-- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from encrypted config
+List Bitbucket repositories and print a migration plan without creating or pushing. See [Preview](#preview).
 
 ### `migrate`
 
-List Bitbucket repositories and migrate the repositories selected by the user to GitHub.
+List Bitbucket repositories and migrate the selected repositories to GitHub. See [Real Migration Behavior](#real-migration-behavior).
 
-```bash
-bkt2gh migrate
-```
+### Repository Selection
 
-Options:
-
-- `--workspace name`: workspace to use instead of `BITBUCKET_WORKSPACE` from encrypted config
-
-## Repository Selection
-
-When `migrate` runs, it opens a repository selection screen.
+When `migrate` or `migrate-preview` runs, it opens a repository selection screen.
 
 Commands:
 
@@ -191,7 +178,7 @@ Commands:
 - `filter text`: filter by name or slug
 - `done`: finish selection
 
-## Visibility Policy
+### Visibility Policy
 
 After selecting repositories, choose the GitHub repository visibility policy.
 
@@ -242,14 +229,7 @@ Build:
 go build -o bkt2gh ./cmd/bkt2gh
 ```
 
-Licenses:
+## License
 
 - Project: [MIT](LICENSE)
 - Third-party notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-
-## Notes
-
-- Existing target GitHub repositories are not overwritten.
-- GitHub repository names use Bitbucket repository slugs.
-- Encrypted `config.yaml` is stored outside the repository in the OS user config directory.
-- If `git-lfs` is not installed, LFS handling is skipped and only the regular Git mirror push is performed.
