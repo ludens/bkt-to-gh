@@ -4,14 +4,10 @@
 
 <p align="center"><strong>Go CLI for migrating Bitbucket Cloud repositories to GitHub.</strong></p>
 
-## INDEX
-
 <p align="center">
-| <a href="README.ko.md"><b>한국어</b></a> |
-| <a href="#features"><b>Features</b></a> | <a href="#requirements"><b>Requirements</b></a> | <a href="#installation"><b>Installation</b></a> |
-| <a href="#quick-start"><b>Quick Start</b></a> | <a href="#configuration"><b>Configuration</b></a> | <a href="#usage"><b>Usage</b></a> |
-| <a href="#preview"><b>Preview</b></a> | <a href="#real-migration-behavior"><b>Real Migration Behavior</b></a> |
-| <a href="#development"><b>Development</b></a> | <a href="#license"><b>License</b></a> |
+<a href="#features"><b>Features</b></a> | <a href="#requirements"><b>Requirements</b></a> | <a href="#installation"><b>Installation</b></a> | <a href="#quick-start"><b>Quick Start</b></a><br/>
+<a href="#configuration"><b>Configuration</b></a> | <a href="#usage"><b>Usage</b></a> | <a href="#preview"><b>Preview</b></a> | <a href="#real-migration-behavior"><b>Real Migration Behavior</b></a><br/>
+<a href="#development"><b>Development</b></a> | <a href="#license"><b>License</b></a> | <a href="README.ko.md"><b>한국어</b></a>
 </p>
 
 ## Features

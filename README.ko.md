@@ -2,16 +2,12 @@
 
 ![bkt2gh](bkt-to-gh.jpg)
 
-<p align="center"><strong>Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI입니다.</strong></p>
-
-## INDEX
+<p align="center"><strong>Bitbucket Cloud 저장소를 GitHub로 옮기는 Go CLI</strong></p>
 
 <p align="center">
-| <a href="README.md"><b>English</b></a> |
-| <a href="#주요-기능"><b>주요 기능</b></a> | <a href="#요구-사항"><b>요구 사항</b></a> | <a href="#설치"><b>설치</b></a> |
-| <a href="#빠른-시작"><b>빠른 시작</b></a> | <a href="#설정"><b>설정</b></a> | <a href="#사용법"><b>사용법</b></a> |
-| <a href="#preview"><b>Preview</b></a> | <a href="#실제-마이그레이션-동작"><b>실제 마이그레이션 동작</b></a> |
-| <a href="#개발"><b>개발</b></a> | <a href="#라이선스"><b>라이선스</b></a> |
+<a href="#주요-기능"><b>주요 기능</b></a> | <a href="#요구-사항"><b>요구 사항</b></a> | <a href="#설치"><b>설치</b></a> | <a href="#빠른-시작"><b>빠른 시작</b></a><br/>
+<a href="#설정"><b>설정</b></a> | <a href="#사용법"><b>사용법</b></a> | <a href="#preview"><b>Preview</b></a> | <a href="#실제-마이그레이션-동작"><b>실제 마이그레이션 동작</b></a><br/>
+<a href="#개발"><b>개발</b></a> | <a href="#라이선스"><b>라이선스</b></a> | <a href="README.md"><b>English</b></a>
 </p>
 
 ## 주요 기능
