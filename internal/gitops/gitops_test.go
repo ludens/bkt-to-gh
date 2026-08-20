@@ -10,12 +10,11 @@ import (
 	"github.com/ludens/bkt-to-gh/internal/model"
 )
 
-func TestMirrorMigratorRunsMirrorCloneLFSAndPush(t *testing.T) {
+func TestMirrorMigratorRunsMirrorCloneAndPush(t *testing.T) {
 	runner := &recordingRunner{}
 	migrator := MirrorMigrator{
-		Runner:          runner,
-		TempDir:         t.TempDir(),
-		GitLFSAvailable: func() bool { return true },
+		Runner:  runner,
+		TempDir: t.TempDir(),
 	}
 
 	err := migrator.Migrate(context.Background(), model.Repository{
@@ -29,9 +28,7 @@ func TestMirrorMigratorRunsMirrorCloneLFSAndPush(t *testing.T) {
 	joined := runner.joinedArgs()
 	for _, want := range []string{
 		"git clone --mirror https://bitbucket.org/team/repo-one.git",
-		"git lfs fetch --all",
 		"git remote set-url origin https://github.com/acme/repo-one.git",
-		"git lfs push --all origin",
 		"git push --mirror origin",
 	} {
 		if !strings.Contains(joined, want) {
@@ -52,9 +49,8 @@ func TestMirrorMigratorRemovesExistingMirrorBeforeClone(t *testing.T) {
 
 	runner := &cloneTargetMustNotExistRunner{t: t}
 	migrator := MirrorMigrator{
-		Runner:          runner,
-		TempDir:         tempDir,
-		GitLFSAvailable: func() bool { return true },
+		Runner:  runner,
+		TempDir: tempDir,
 	}
 
 	err := migrator.Migrate(context.Background(), model.Repository{
@@ -76,7 +72,6 @@ func TestMirrorMigratorUsesAskPassForBitbucketHTTPSClone(t *testing.T) {
 		TempDir:              t.TempDir(),
 		BitbucketUsername:    "alice",
 		BitbucketAppPassword: "secret-app-password",
-		GitLFSAvailable:      func() bool { return true },
 	}
 
 	err := migrator.Migrate(context.Background(), model.Repository{
@@ -106,41 +101,13 @@ func TestMirrorMigratorUsesAskPassForBitbucketHTTPSClone(t *testing.T) {
 	}
 }
 
-func TestMirrorMigratorSkipsLFSWhenGitLFSIsUnavailable(t *testing.T) {
-	runner := &recordingRunner{}
-	out := new(strings.Builder)
-	migrator := MirrorMigrator{
-		Runner:          runner,
-		TempDir:         t.TempDir(),
-		Out:             out,
-		GitLFSAvailable: func() bool { return false },
-	}
-
-	err := migrator.Migrate(context.Background(), model.Repository{
-		Slug:     "repo-one",
-		CloneURL: "https://bitbucket.org/team/repo-one.git",
-	}, "https://github.com/acme/repo-one.git")
-	if err != nil {
-		t.Fatalf("Migrate() error = %v", err)
-	}
-
-	joined := runner.joinedArgs()
-	if strings.Contains(joined, "git lfs") {
-		t.Fatalf("git lfs was called despite unavailable git-lfs:\n%s", joined)
-	}
-	if !strings.Contains(out.String(), "git-lfs is not available") {
-		t.Fatalf("output missing git-lfs unavailable warning: %q", out.String())
-	}
-}
-
 func TestPreparedMirrorUsesAskPassForGitHubPush(t *testing.T) {
 	runner := &recordingRunner{}
 	migrator := MirrorMigrator{
-		Runner:          runner,
-		TempDir:         t.TempDir(),
-		GitHubUsername:  "acme",
-		GitHubToken:     "ghp-secret",
-		GitLFSAvailable: func() bool { return true },
+		Runner:         runner,
+		TempDir:        t.TempDir(),
+		GitHubUsername: "acme",
+		GitHubToken:    "ghp-secret",
 	}
 
 	err := migrator.Migrate(context.Background(), model.Repository{

@@ -42,15 +42,12 @@ type MirrorMigrator struct {
 	BitbucketAppPassword string
 	GitHubUsername       string
 	GitHubToken          string
-	GitLFSAvailable      func() bool
 }
 
 type PreparedMirror struct {
 	Runner    Runner
 	MirrorDir string
-	Out       io.Writer
 	PushEnv   []string
-	UseLFS    bool
 	cleanup   func() error
 }
 
@@ -85,8 +82,6 @@ func (m MirrorMigrator) Prepare(ctx context.Context, repo model.Repository) (int
 		cleanup()
 		return nil, err
 	}
-	useLFS := m.gitLFSAvailable()
-
 	mirrorDir := filepath.Join(baseDir, repo.Slug+".git")
 	if err := os.RemoveAll(mirrorDir); err != nil {
 		cleanup()
@@ -96,19 +91,10 @@ func (m MirrorMigrator) Prepare(ctx context.Context, repo model.Repository) (int
 		cleanup()
 		return nil, err
 	}
-	if useLFS {
-		if err := runner.Run(ctx, mirrorDir, bitbucketEnv, "git", "lfs", "fetch", "--all"); err != nil && m.Out != nil {
-			fmt.Fprintf(m.Out, "LFS fetch skipped for %s: %v\n", repo.Slug, err)
-		}
-	} else if m.Out != nil {
-		fmt.Fprintf(m.Out, "LFS fetch skipped for %s: git-lfs is not available\n", repo.Slug)
-	}
 	return &PreparedMirror{
 		Runner:    runner,
 		MirrorDir: mirrorDir,
-		Out:       m.Out,
 		PushEnv:   githubEnv,
-		UseLFS:    useLFS,
 		cleanup:   cleanup,
 	}, nil
 }
@@ -136,14 +122,6 @@ esac
 	}, nil
 }
 
-func (m MirrorMigrator) gitLFSAvailable() bool {
-	if m.GitLFSAvailable != nil {
-		return m.GitLFSAvailable()
-	}
-	_, err := exec.LookPath("git-lfs")
-	return err == nil
-}
-
 func githubUsername(username string) string {
 	if username != "" {
 		return username
@@ -166,13 +144,6 @@ func (m *PreparedMirror) Push(ctx context.Context, githubCloneURL string) error 
 	}
 	if err := m.Runner.Run(ctx, m.MirrorDir, m.PushEnv, "git", "remote", "set-url", "origin", githubCloneURL); err != nil {
 		return err
-	}
-	if m.UseLFS {
-		if err := m.Runner.Run(ctx, m.MirrorDir, m.PushEnv, "git", "lfs", "push", "--all", "origin"); err != nil && m.Out != nil {
-			fmt.Fprintf(m.Out, "LFS push skipped: %v\n", err)
-		}
-	} else if m.Out != nil {
-		fmt.Fprintln(m.Out, "LFS push skipped: git-lfs is not available")
 	}
 	if err := m.Runner.Run(ctx, m.MirrorDir, m.PushEnv, "git", "push", "--mirror", "origin"); err != nil {
 		return err
